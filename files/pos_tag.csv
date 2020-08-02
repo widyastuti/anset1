@@ -1,0 +1,12 @@
+<kalimat id=1>,Kera               NN
+untuk              SC
+amankan            VB
+pesta olahraga     NN
+Pemerintah        NNP
+                 ... 
+,                   Z
+ujar               VB
+-nya              PRP
+menambahkan        VB
+.                   Z
+Name: <kalimat id=1>, Length: 255937, dtype: object

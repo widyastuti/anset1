@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Anset | Analisa Sentimen Twitter</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="https://code.highcharts.com/modules/variable-pie.js"></script>
+	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script src="https://code.highcharts.com/modules/export-data.js"></script>
+	<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+</head>
+<style>
+	.button {
+	  padding: 2px 2px;
+	  margin-top: 8px;
+	  margin-right: 16px;
+	  background: #ddd;
+	  font-size: 16px;
+	  border: none;
+	  cursor: pointer;
+	}
+	.button:hover {
+	  background-color: #ccc;
+	}
+	#container {
+      	  background-image: url(https://i.ya-webdesign.com/images/minimalist-transparent-loading-gif-1.gif);
+          background-repeat: no-repeat;
+          background-position: center;
+	}
+</style>
+<body>
+	<div class="se-pre-con"></div>
+	<div class='container-md'>
+		<div class='text-center'>
+			<h2>ANSET</h2>
+			<div class="spinner-border"></div>
+			<div id="search_box" class="container-sm">
+				<div id="container" style="min-width: 300px; height: 400px; max-width: 600px; margin: 0 auto;"></div>
+				<input type="text" id="query">
+				<button class="button" id="search">cari</button>
+				<button class="button" id="getcsv">unduh CSV</button>
+				<div id="loading" class="spinner-border" role="status">
+					<span class="sr-only">Loading...</span>
+				</div>
+			</div>
+		</div>
+		<div id="tweets"></div>
+		<footer class="text-center">
+			Widy Astuti - 20160801297
+		</footer>	</div>
+	<script type="text/javascript">
+
+	 var current_data;
+
+
+		function sentiment_to_color(sentiment){
+			if(sentiment == 'positive') return 'panel-info class';
+			else if(sentiment == 'negative') return 'panel-default class';
+			else return 'panel-success';
+		}
+
+		function load_tweets(querystring){
+			$.ajax({
+			    url: 'tweets',
+			    data: {'query': querystring, 'lang':'id', 'retweets_only': 'false', 'with_sentiment': 'true', 'display_text_range' :'full_text'},
+			    dataType: 'json',
+			    type: 'GET',
+			    success: function(data) {
+			    	buildChart(data);
+			    	current_data = data['data'];
+			        var tweets = data['data'];
+			        var container = $('#tweets');
+			        var contents = '';
+			        contents+='<div>'
+
+			        for(i = 0; i < tweets.length; i++){
+			        	contents+= '<div class="panel '+ sentiment_to_color(tweets[i].sentiment) +'"> <div class="panel-heading"> <h3 class="panel-title">'+ tweets[i].user +'</h3> </div> <div class="panel-body"><blockquote>'+ tweets[i].text + '</blockquote> </div> </div>'
+                        //contents += '<li class="list-group-item '+ sentiment_to_color(tweets[i].sentiment) +'">'+ tweets[i].user + ": " + tweets[i].text + '</li>';
+			        }
+
+                    contents+='</div>';
+			        container.html(contents);
+			        $('#query').val(querystring);
+			        $('#loading').html(data['count'] + " Tweet terkait "+ querystring +".");
+			    }
+			});
+		}
+
+		function get_csv(json){
+			var fields = Object.keys(json[0]);
+			var csv = json.map(function(row){
+			  return fields.map(function(fieldName){
+			    return JSON.stringify(row[fieldName] || '');
+			  });
+			});
+			csv.unshift(fields);
+			return csv.join('\r\n');
+		}
+
+		function download(filename, text) {
+		  var element = document.createElement('a');
+		  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+		  element.setAttribute('download', filename);
+
+		  element.style.display = 'none';
+		  document.body.appendChild(element);
+
+		  element.click();
+
+		  document.body.removeChild(element);
+		}
+
+		$(document).ready(function(){
+			load_tweets('PSBB');
+		});
+
+		$('#search').click(function(){
+			$('#loading').html('Loading...');
+			$('#tweets').html('');
+			load_tweets($('#query').val());
+		});
+
+		$('#getcsv').click(function(){
+			download('data.csv', get_csv(current_data));
+		});
+	function buildChart(data) {
+    Highcharts.chart('container', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'variablepie'
+        },
+        title: {
+            text: 'Hasil Analisa sentimen : 100 tweet terakhir '+$('#query').val()
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            variablepie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                    }
+                }
+            }
+        },
+        series: getPercentage(data)
+    });
+};
+function getNegativePercentage(data) {
+	var current_data = data['data'];
+	var counter = 0 ;
+	for (var i = current_data.length - 1; i >= 0; i--) {
+		if(current_data[i].sentiment == 'negative')
+			counter ++;
+	}
+		console.log('negative',counter)
+
+	return counter/data.count;
+}
+function getPositivePercentage(data) {
+	var current_data = data['data'];
+	var counter = 0 ;
+	for (var i = current_data.length - 1; i >= 0; i--) {
+		if(current_data[i].sentiment == 'positive')
+			counter ++;
+	}
+		console.log('positive',counter)
+
+	return counter/data.count;
+}
+function getNeutralPercentage(data) {
+	var current_data = data['data'];
+	var counter = 0 ;
+	for (var i = current_data.length - 1; i >= 0; i--) {
+		if(current_data[i].sentiment == 'neutral')
+			counter ++;
+	}
+	console.log('neutral',counter)
+	return counter/data.count;
+}
+function getPercentage(data) {
+	var neutral = getNeutralPercentage(data);
+	var positive = getPositivePercentage(data);
+	var negative = getNegativePercentage(data);
+
+	return [{
+            name: 'Tweets',
+            //colorByPoint: true,
+            data: [{
+                name: 'Positive',
+                y: positive
+            }, {
+                name: 'Negative',
+                y: negative,
+                sliced: true,
+                selected: true
+            }, {
+                name: 'Neutral',
+                y: neutral
+            }]
+        }]
+	// body
+}
+
+	</script>
+</body>
+</html>
