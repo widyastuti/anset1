@@ -30,7 +30,7 @@ class TwitterClient(object):
             self.with_sentiment = with_sentiment
             self.api = tweepy.API(self.auth, timeout=100)
             self.tweet_mode = tweet_mode
-            self.tweet_count_max = 100
+            self.tweet_count_max = 3
         except:
             print("Error: Authentication Failed")
 
