@@ -28,7 +28,7 @@ class TwitterClient(object):
             self.lang = lang
             self.retweets_only = retweets_only
             self.with_sentiment = with_sentiment
-            self.api = tweepy.API(self.auth, timeout=100)
+            self.api = tweepy.API(self.auth, timeout=500)
             self.tweet_count_max = 50            
             self.tweet_mode = tweet_mode
         except:
